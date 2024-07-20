@@ -1,0 +1,40 @@
+.basic-modal {
+    background-color: rgba(0, 0, 0, 0.4); /* Overlay effect: translucent background: black w/ partial opacity */
+    z-index: 1019; /* Overlay effect: positioned over other containers */
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    position: fixed; /* Fix position on the top-left corner*/
+    top: 0;
+    left: 0;
+    overflow: auto; /* Enable scroll if needed */
+    padding-top: 80px; /* Location of the content container */
+}
+
+.basic-modal .basic-modal-content {
+    position: relative;
+    background-color: white;
+    width: 600px; /* Width in proportion to its parent container*/
+    max-width: 680px; /* Max width where it stops expanding */
+    margin: auto; /* Auto margin according to the element width */
+    padding: 20px;
+    border-radius: 6px; /* Optional. Rounds container corners */
+    top: 5%;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    min-height: 100px;
+    margin-bottom: 20px;
+}
+
+.basic-modal .basic-modal-content > .close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1;
+}
+
+
+@media screen and (max-width: 767px) {
+    .basic-modal {
+        overflow: unset;
+        padding-top: 0px;
+    }
+}
