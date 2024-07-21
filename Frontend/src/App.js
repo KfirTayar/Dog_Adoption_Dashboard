@@ -1,24 +1,14 @@
 import React, {useEffect, useState} from 'react';
 import './App.css';
 import axios from "axios";
-import GenericModal from './components/modal';
-import BasicModal from './components/BasicModal'; // Adjust the path as necessary
+import FindDogByIdModal from './components/FindDogByIdModal';
+import AddNewDogModal from './components/AddNewDogModal';
 import Header from './components/header';
 
 // MUI components
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
-import {
-  Box, Checkbox, FormControl, FormControlLabel, InputLabel,
-  Paper,
-  Select,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow
-} from "@mui/material";
+import { Box, Checkbox, FormControl, FormControlLabel, InputLabel, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TableRow} from "@mui/material";
 import MenuItem from '@mui/material/MenuItem';
 import {Button} from "@mui/material";
 import Container from '@mui/material/Container';
@@ -26,52 +16,41 @@ import Container from '@mui/material/Container';
 
 const App = () => {
 
-  // Creating variables with an initial state
-  const [shown, setShown] = useState(false);
   const [dogs, setDogs] = useState([]);
   const [editingDog, setEditingDog] = useState(null);
-  const [formState, setFormState] = useState({ chipId: '', name: '', age: '', gender: '', physical: '', arrivalDate: '', sterilized: '', adopdedStatus: '' });
-  const [originalTable, setOriginalTable] = useState(dogs);
-  const [showOnlyAdopted, setShowOnlyAdopted] = useState(false);
-  const [filteredByArrivalDate, setFilteredByArrivalDate] = useState(false);
+  const [formState, setFormState] = useState(
+      { chipId: '', name: '', age: '', gender: '', physical: '', arrivalDate: '', sterilized: '', adopdedStatus: '' });
+  const [addNewDogShown, setAddNewDogShown] = useState(false);
   const [findByChipIdShown, setFindByChipIdShown] = useState(false);
+  const [showOnlyUnadopted, setShowOnlyUnadopted] = useState(false);
+  const [filteredByArrivalDate, setFilteredByArrivalDate] = useState(false);
 
   useEffect(() => {
-    fetchDogs();
+    getAllDogs();
   }, []);
 
-  const fetchDogs = async () => {
-    const response = await axios.get('http://localhost:3000/dogs');
-    setDogs(response.data);
-  };
-
-  const fetchAdoptedDogs = () => {
-
-    if (!showOnlyAdopted) {
-      const onlyAdopted = dogs.filter(dog => dog.adopdedStatus === 'no');
-      setOriginalTable(dogs); // Save original dogs list
-      setShowOnlyAdopted(true);
-      setDogs(onlyAdopted);
-
-    } else {
-      setShowOnlyAdopted(false);
-      setDogs(originalTable);
+  // Client-Side filters
+  const getUnadoptedDogs = () => {
+    if (!showOnlyUnadopted) {
+      const onlyUnadopted = dogs.filter(dog => dog.adopdedStatus === 'no');
+      setShowOnlyUnadopted(true);
+      setDogs(onlyUnadopted);
     }
-
+    else {
+      setShowOnlyUnadopted(false);
+      getAllDogs();
+    }
   };
 
-  const handleSortByArrivalDate = () => {
-
+  const getSortedTableByArrivalDate = () => {
     if (!filteredByArrivalDate) {
       const sortedDogs = [...dogs].sort((a, b) => new Date(a.arrivalDate) - new Date(b.arrivalDate));
-      setOriginalTable(dogs); // Save original dogs list
       setFilteredByArrivalDate(true);
       setDogs(sortedDogs);
     }
-
     else {
       setFilteredByArrivalDate(false);
-      setDogs(originalTable);
+      getAllDogs();
     }
   }
 
@@ -79,43 +58,62 @@ const App = () => {
     setFormState({ ...formState, [e.target.name]: e.target.value });
   };
 
+  // APIs
+  const getAllDogs = async () => {
+    const res = await axios.get('http://localhost:3000/dogs');
+    setDogs(res.data);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Create or Update a dog according to editingDog value
     const url = editingDog ? `http://localhost:3000/dogs/${editingDog._id}` : 'http://localhost:3000/dogs';
     const method = editingDog ? 'put' : 'post';
     await axios[method](url, formState);
+
+    // Clean the cells
     setFormState({ chipId: '', name: '', age: '', gender: '', physical: '', arrivalDate: '', sterilized: '', adopdedStatus: '' });
     setEditingDog(null);
-    fetchDogs();
-    toggleModal();
+
+    // Show the updated table
+    getAllDogs();
+    toggleAddNewDogModal();
   };
 
   const handleEdit = (dog) => {
+    // editingDog != null
     setEditingDog(dog);
+    // Fill the form with exist values of the dog
     setFormState(dog);
-    toggleModal();
+    toggleAddNewDogModal();
   };
 
   const handleDelete = async (id) => {
     await axios.delete(`http://localhost:3000/dogs/${id}`);
-    fetchDogs();
+    getAllDogs();
   };
 
-  const handleFindDogByChipId = async () => {
+  const handleFindDog = async () => {
     try {
-      const response = await axios.get(`http://localhost:3000/dogs/${formState.chipId}`);
-      setDogs([response.data]);
-      setFormState({ chipId: '' });
+      const res = await axios.get(`http://localhost:3000/dogs/${formState.chipId}`);
+      setDogs([res.data]);
       toggleFindByChipIdModal();
 
-    } catch (error) {
-      console.error('Error finding dog by chip ID:', error);
+    }
+    catch (error) {
+      console.error('Error: Chip ID not exist:', error);
+    }
+    finally {
+      setFormState({ chipId: '' });
     }
   };
 
-
-  const toggleModal = () => setShown(prev => !prev);
+  // Set toggle modals
+  const toggleAddNewDogModal = () => setAddNewDogShown(prev => !prev);
   const toggleFindByChipIdModal = () => setFindByChipIdShown(prev => !prev);
+
+  // Define table index
   let index = 1;
 
   return (
@@ -123,12 +121,14 @@ const App = () => {
       <div className="App">
         <Container component="main" maxWidth="lg">
           <Header />
-          <div id="content">
-            <GenericModal displayModal={shown} closeModal={toggleModal}>
-              <h1>Add New Dog</h1>
+
+          {/* Creates the forms for adding new dog and finding dog by Chip ID*/}
+          <div>
+            <AddNewDogModal open={addNewDogShown} handleClose={toggleAddNewDogModal} title="Add New Dog" >
               <div>
                 <Box component="form" onSubmit={handleSubmit} sx={{ m: 1, minWidth: 200 }}>
                   <Grid container spacing={1}>
+
                     <Grid item xs={4}>
                       <TextField
                           name="chipId"
@@ -140,11 +140,12 @@ const App = () => {
                     </Grid>
 
                     <Grid item xs={4}>
-                      <TextField name="name"
-                                 value={formState.name}
-                                 onChange={handleChange}
-                                 label="Name"
-                                 required
+                      <TextField
+                          name="name"
+                          value={formState.name}
+                          onChange={handleChange}
+                          label="Name"
+                          required
                       />
                     </Grid>
 
@@ -202,10 +203,10 @@ const App = () => {
                       <TextField
                           sx={{ width: '185px', height: '55px' }}
                           name="arrivalDate"
+                          label="Arrival Date"
                           type="date"
                           value={formState.arrivalDate}
                           onChange={handleChange}
-                          label="Arrival Date"
                           required
                       />
                     </Grid>
@@ -231,7 +232,7 @@ const App = () => {
 
                     <Grid item xs={4}>
                       <FormControl fullWidth>
-                        <InputLabel id="size-label">Is Adopted</InputLabel>
+                        <InputLabel id="adopt-label">Is Adopted</InputLabel>
                           <Select
                               sx={{ width: '185px' }}
                               labelId="adopt-label"
@@ -256,23 +257,15 @@ const App = () => {
                         type="submit"
                       >
                       {editingDog ? 'Update' : 'Create'}</Button></Grid>
+
                   </Grid>
                 </Box>
               </div>
-            </GenericModal>
-          </div>
+            </AddNewDogModal>
 
-          {/* Creates a table that represents the current DB*/}
-          <TableContainer component={Paper}>
-            <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2 }}>
-              <Button sx={{marginRight: 5}} variant="contained" color="info" size="small" onClick={toggleModal}>+</Button>
-              <Button sx={{marginRight: 5}} variant="contained" color="warning" size="small" onClick={fetchDogs}>Show all dogs</Button>
-              <Button sx={{marginRight: 5}} variant="contained" color="warning" size="small" onClick={toggleFindByChipIdModal}>Find dog by Chip ID</Button>
-              <BasicModal
-                  open={findByChipIdShown}
-                  handleClose={toggleFindByChipIdModal}
-                  title="Find Dog by Chip ID"
-              >
+            <FindDogByIdModal open={findByChipIdShown} handleClose={toggleFindByChipIdModal} title="Find Dog by Chip ID" >
+
+              <Grid item xs={4}>
                 <TextField
                     name="chipId"
                     value={formState.chipId}
@@ -280,15 +273,24 @@ const App = () => {
                     label="Chip ID"
                     required
                 />
+              </Grid>
 
-                <Button sx={{marginY: 1, width: '200px', height: '55px'}} variant="outlined" color="primary" onClick={handleFindDogByChipId}>
-                  Find
-                </Button>
-              </BasicModal>
-              <FormControlLabel sx={{marginRight: 5}}  control={<Checkbox onChange={fetchAdoptedDogs} color="warning"/>} label="Show unadopted dogs" />
-              <FormControlLabel sx={{marginRight: 5}}  control={<Checkbox onChange={handleSortByArrivalDate} color="warning"/>} label="Sort by date" />
+              <Button sx={{marginY: 1, width: '200px', height: '55px'}} variant="outlined" color="primary" onClick={handleFindDog}>
+                Find
+              </Button>
+            </FindDogByIdModal>
+          </div>
+
+          {/* Creates a table that represents the current DB*/}
+          <TableContainer component={Paper}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2}}>
+              <Button sx={{marginRight: 5}} variant="contained" color="info" size="small" onClick={toggleAddNewDogModal}>+</Button>
+              <Button sx={{marginRight: 5}} variant="contained" color="warning" size="small" onClick={getAllDogs}>Show all dogs</Button>
+              <Button sx={{marginRight: 5}} variant="contained" color="warning" size="small" onClick={toggleFindByChipIdModal}>Find dog by Chip ID</Button>
+              <FormControlLabel sx={{marginRight: 5}}  control={<Checkbox onChange={getUnadoptedDogs} color="warning"/>} label="Show unadopted dogs" />
+              <FormControlLabel sx={{marginRight: 5}}  control={<Checkbox onChange={getSortedTableByArrivalDate} color="warning"/>} label="Sort by date" />
             </Box>
-            <Table sx={{ minWidth: 650 }} aria-label="simple table">
+            <Table sx={{ minWidth: 650}} aria-label="simple table">
               <TableHead>
                 <TableRow>
                   <TableCell align="left">Index</TableCell>
