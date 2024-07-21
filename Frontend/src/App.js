@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import './App.css';
 import axios from "axios";
 import FindDogByIdModal from './components/FindDogByIdModal';
 import AddNewDogModal from './components/AddNewDogModal';
@@ -282,7 +281,7 @@ const App = () => {
           </div>
 
           {/* Creates a table that represents the current DB*/}
-          <TableContainer component={Paper}>
+          <TableContainer component={Paper} sx={{mb:10}}>
             <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 2}}>
               <Button sx={{marginRight: 5}} variant="contained" color="info" size="small" onClick={toggleAddNewDogModal}>+</Button>
               <Button sx={{marginRight: 5}} variant="contained" color="warning" size="small" onClick={getAllDogs}>Show all dogs</Button>
