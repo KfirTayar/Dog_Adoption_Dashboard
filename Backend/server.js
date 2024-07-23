@@ -1,39 +1,38 @@
 const Koa = require('koa');
 const mongoose = require('mongoose');
-const routes = require('./routes/routes'); // Ensure this path is correct
+const dogRoutes = require('./routes/routes');
 const cors = require('@koa/cors');
 const { koaBody } = require('koa-body');
+const dotenv = require('dotenv');
 
 const server = new Koa();
 
-mongoose.connect('mongodb://localhost:27017/adoptadog', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-    .then(() => {
-        console.log('Connected to MongoDB');
-    })
-    .catch((error) => {
-        console.error('Error connecting to MongoDB:', error);
-    });
+dotenv.config();
+
+mongoose.connect(process.env.LOCAL_MONGODB_CONNECTION_STRING);
+
+// Checking if the DB is/isn't connected
+const db = mongoose.connection;
+db.on('error', function() {console.log('The DB is not connected!')});
+db.once('open', function() {console.log('The DB is connected!')});
 
 server.use(cors({
-    origin: '*', // Allow all origins; change to specific origin in production
-    allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow these methods
-    allowHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'], // Specify allowed headers
-    credentials: true, // Allow cookies to be sent with requests
+    origin: '*',
+    allowMethods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept'],
+    credentials: true,
 }));
 
 server.use(koaBody({
-    multipart: true, // Support file uploads
+    multipart: true,
     urlencoded: true,
     json: true,
 }));
 
-server.use(routes.routes());
-server.use(routes.allowedMethods());
+server.use(dogRoutes.routes());
+server.use(dogRoutes.allowedMethods());
 
-const port = 3000;
-server.listen(port, () => {
-    console.log(`Server running on port ${port}`);
+const PORT = process.env.PORT;
+server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });

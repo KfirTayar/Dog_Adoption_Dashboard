@@ -65,7 +65,7 @@ const App = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    console.log(formState.arrivalDate);
     // Create or Update a dog according to editingDog value
     const url = editingDog ? `http://localhost:3000/dogs/${editingDog._id}` : 'http://localhost:3000/dogs';
     const method = editingDog ? 'put' : 'post';
@@ -81,10 +81,15 @@ const App = () => {
   };
 
   const handleEdit = (dog) => {
+    const formattedDog = {
+      ...dog,
+      arrivalDate: new Date(dog.arrivalDate).toISOString().split('T')[0] // Format the date to yyyy-MM-dd
+    };
+
     // editingDog != null
-    setEditingDog(dog);
+    setEditingDog(formattedDog);
     // Fill the form with exist values of the dog
-    setFormState(dog);
+    setFormState(formattedDog);
     toggleAddNewDogModal();
   };
 
@@ -95,13 +100,16 @@ const App = () => {
 
   const handleFindDog = async () => {
     try {
-      const res = await axios.get(`http://localhost:3000/dogs/${formState.chipId}`);
-      setDogs([res.data]);
-      toggleFindByChipIdModal();
-
+      if (formState.chipId) {
+        const res = await axios.get(`http://localhost:3000/dogs/${formState.chipId}`);
+        setDogs([res.data]);
+        toggleFindByChipIdModal();
+      }
     }
     catch (error) {
-      console.error('Error: Chip ID not exist:', error);
+      alert('Error: Chip ID not exist:');
+      toggleFindByChipIdModal();
+
     }
     finally {
       setFormState({ chipId: '' });
@@ -200,14 +208,14 @@ const App = () => {
 
                     <Grid item xs={4}>
                       <TextField
-                          sx={{ width: '185px', height: '55px' }}
-                          name="arrivalDate"
-                          label="Arrival Date"
-                          type="date"
-                          value={formState.arrivalDate}
-                          onChange={handleChange}
-                          required
-                      />
+                        sx={{ width: '185px', height: '55px' }}
+                        name="arrivalDate"
+                        label="Arrival Date"
+                        type="date"
+                        value={formState.arrivalDate}
+                        onChange={handleChange}
+                        required
+                    />
                     </Grid>
 
                     <Grid item xs={4}>
@@ -316,7 +324,7 @@ const App = () => {
                       <TableCell align="left">{dog.age}</TableCell>
                       <TableCell align="left">{dog.gender}</TableCell>
                       <TableCell align="left">{dog.physical}</TableCell>
-                      <TableCell align="left">{new Date(dog.arrivalDate).toLocaleDateString()}</TableCell>
+                        <TableCell align="left">{new Date(dog.arrivalDate).toLocaleDateString()}</TableCell>
                       <TableCell align="left">{dog.sterilized}</TableCell>
                       <TableCell align="left">{dog.adopdedStatus}</TableCell>
                       <TableCell align="left">

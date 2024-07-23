@@ -13,31 +13,34 @@ const dogsSchema = new mongoose.Schema(
         },
 
         age : {
-            type : Number, required: true, trim: true
+            type : Number, required: true
         },
 
         gender : {
-            type: String, enum: ['male', 'female']
+            type: String, enum: ['male', 'female'], required: true
         },
 
         physical : {
-            type: String, enum: ['small', 'medium', 'large']
+            type: String, enum: ['small', 'medium', 'large'], required: true
         },
 
         arrivalDate : {
-            type: Date, required: true, trim: true
+            type: Date, required: true
         },
 
         sterilized : {
-            type: String, enum: ['yes', 'no']
+            type: String, enum: ['yes', 'no'], required: true
         },
 
         adopdedStatus : {
-            type: String, enum: ['yes', 'no']
+            type: String, enum: ['yes', 'no'], required: true
         },
 
     },
-    { strict: false, autoCreate: true, timestamps: true }
+    {
+        autoCreate: true,
+        timestamps: true
+    }
 )
 
 module.exports = mongoose.model(collectionName, dogsSchema);
